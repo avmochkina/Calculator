@@ -1,94 +1,119 @@
-const numbers = document.querySelectorAll('.number');
-const operations = document.querySelectorAll('.operator');
-const clearBtns = document.querySelectorAll('.clear-btn');
-const decimalBtn = document.getElementById('decimal');
-const result = document.getElementById('result');
-const display = document.getElementById('display');
-let MemoryCurrentNumber = 0;
-let MemoryNewNumber = false;
-let MemoryPendingOperation = '';
+const numbers = document.querySelectorAll('.numbers');
+const operators = document.querySelectorAll('.operator');
+const input = document.getElementById('input');
+const inputOperation = document.getElementById('input-operation');
+const result = document.querySelector('.result');
+const dot = document.querySelector('.dot');
+const clearAll = document.getElementById('clear-all');
+const clear = document.getElementById('clear');
 
-for (let i = 0; i < numbers.length; i++) {
-  let number = numbers[i];
-  number.addEventListener('click', function (e) {
-    numberPress(e.target.textContent);
-  });
+let memoryFirstNumber = '';
+let memorySecondNumber = '';
+let ifChanged = false;
+let memoryOperation = '';
+let temporaryStep = '';
+
+
+for(let i = 0; i < numbers.length; i++) {
+    let number = numbers[i]
+    number.addEventListener('click', function(e) {
+        pressNumber(e.target.textContent)
+    })
 }
 
-for (let i = 0; i < operations.length; i++) {
-  var operationBtn = operations[i];
-  operationBtn.addEventListener('click', function (e) {
-    operationPress(e.target.textContent);
-  });
+for(let i = 0; i < operators.length; i++) {
+    let operator = operators[i]
+    operator.addEventListener('click', function(e) {
+        count(e.target.textContent)
+    })
 }
 
-for (let i = 0; i < clearBtns.length; i++) {
-  var clearBtn = clearBtns[i];
-  clearBtn.addEventListener('click', function (e) {
-    clear(e.target.textContent);
-  });
-}
+dot.addEventListener('click', function() {
+    console.log('dot')
+})
 
-decimalBtn.addEventListener('click', decimal);
+clearAll.addEventListener('click', function() {
+    input.value = 0;
+    inputOperation.value = 0;
+    memoryFirstNumber = 0;
+    memorySecondNumber = 0;
+    ifChanged = false;
+    memoryOperation = '';
+    temporaryStep = '';
+})
 
-function numberPress(number) {
-  if (MemoryNewNumber) {
-    display.value = number;
-    MemoryNewNumber = false;
-  } else {
-    if (display.value === '0') {
-      display.value = number;
-    } else {
-      display.value += number;
+
+clear.addEventListener('click', function() {
+    input.value = input.value.slice(0, - 1);
+    inputOperation.value = input.value;
+    if(ifChanged) memorySecondNumber = input.value;
+    else memoryFirstNumber = input.value;
+    console.log('после удаления символа' + memoryFirstNumber +"and"+ memorySecondNumber)
+})
+
+function pressNumber(number) {
+    console.log(ifChanged)
+    
+    if(ifChanged) {
+        input.value = number;
+        memorySecondNumber = number;
+        inputOperation.value = memoryFirstNumber + memoryOperation + memorySecondNumber;
+        temporaryStep = memoryFirstNumber + memoryOperation + memorySecondNumber;
+        ifChanged = false;
     }
-  }
-}
-
-function operationPress(op) {
-  let localOperationMemory = display.value;
-
-  if (MemoryNewNumber && MemoryPendingOperation !== '=') {
-    display.value = MemoryCurrentNumber;
-  } else {
-    MemoryNewNumber = true;
-    if (MemoryPendingOperation === '+') {
-      MemoryCurrentNumber += +localOperationMemory;
-    } else if (MemoryPendingOperation === '-') {
-      MemoryCurrentNumber -= +localOperationMemory;
-    } else if (MemoryPendingOperation === '*') {
-      MemoryCurrentNumber *= +localOperationMemory;
-    } else if (MemoryPendingOperation === '/') {
-      MemoryCurrentNumber /= +localOperationMemory;
-    } else {
-      MemoryCurrentNumber = +localOperationMemory;
+    else {
+        if(input.value === '0') {
+            input.value = number;
+            inputOperation.value = number;
+            memoryFirstNumber = number;
+        }
+        else if(input.value.length < 9 && memorySecondNumber == '') {
+            input.value += number;
+            inputOperation.value += number
+            memoryFirstNumber += number;
+        }
+        else if(input.value.length < 9) {
+            input.value += number;
+            inputOperation.value += number
+            memorySecondNumber += number;
+            temporaryStep = memoryFirstNumber + memoryOperation + memorySecondNumber;
+            ifChanged = false;
+        }
     }
-    display.value = MemoryCurrentNumber;
-    MemoryPendingOperation = op;
-  }
+    console.log(+memoryFirstNumber + "and"+ (+memorySecondNumber))
 }
 
-function decimal(argument) {
-  let localDecimalMemory = display.value;
-
-  if (MemoryNewNumber) {
-    localDecimalMemory = '0.';
-    MemoryNewNumber = false;
-  } else {
-    if (localDecimalMemory.indexOf('.') === -1) {
-      localDecimalMemory += '.';
+function count(operation) {
+    console.log("Начало расчета" + (+memoryFirstNumber) +"and"+ (+memorySecondNumber))
+    result.addEventListener('click', function() {
+        console.log( "REsult" + temporaryStep)
+        inputOperation.value =  temporaryStep + memoryOperation;
+    })
+    if(ifChanged) {
+        memoryOperation = operation;
+        inputOperation.value = memoryFirstNumber + memoryOperation;
     }
-  }
-  display.value = localDecimalMemory;
+    else {
+        ifChanged = true;
+        if(memoryOperation === '+') {        
+            memoryFirstNumber = (+memoryFirstNumber) + (+memorySecondNumber);  
+        } 
+        else if(memoryOperation === '-') {
+            memoryFirstNumber -= memorySecondNumber;           
+        } 
+        else if(memoryOperation === '*') {
+            memoryFirstNumber *= memorySecondNumber;           
+        } 
+        else if(memoryOperation === '/') {
+            memoryFirstNumber /= memorySecondNumber;           
+        } 
+        else {
+        }
+        input.value = memoryFirstNumber;
+        memoryOperation = operation;
+        inputOperation.value =  memoryFirstNumber + memoryOperation;
+        
+    }
+    console.log("Конец расчета" + memoryFirstNumber + memorySecondNumber)
 }
 
-function clear(id) {
-  if (id === 'ce') {
-    display.value = '0';
-    MemoryNewNumber = true;
-  } else if (id === 'c') {
-    display.value = '0';
-    MemoryNewNumber = true;
-    MemoryCurrentNumber = 0;
-    MemoryPendingOperation = '';
-  }
-}
